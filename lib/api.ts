@@ -7,7 +7,6 @@ import {
   DEMO_STATS,
   DEMO_RECIPES,
   DEMO_BARCODE,
-  DEMO_LIVE_SCAN,
 } from './demo';
 import type {
   ScanResult,
@@ -16,7 +15,6 @@ import type {
   RecipeSuggestion,
   BarcodeProduct,
   UserStats,
-  LiveScanResult,
 } from './types';
 
 async function fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
@@ -46,17 +44,6 @@ export async function scanImage(base64Image: string): Promise<ScanResult> {
     return DEMO_SCAN_RESULTS[randomKey];
   }
   return fetchApi<ScanResult>('/api/scan', {
-    method: 'POST',
-    body: JSON.stringify({ image: base64Image }),
-  });
-}
-
-export async function scanImageLive(base64Image: string): Promise<LiveScanResult> {
-  if (DEMO_MODE) {
-    await delay(800);
-    return DEMO_LIVE_SCAN;
-  }
-  return fetchApi<LiveScanResult>('/api/scan/live', {
     method: 'POST',
     body: JSON.stringify({ image: base64Image }),
   });
