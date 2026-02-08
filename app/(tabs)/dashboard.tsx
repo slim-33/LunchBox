@@ -27,8 +27,8 @@ export default function DashboardScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const chartWidth = Math.min(width, 480) - 64;
-  const statWidth = (Math.min(width, 480) - 40) / 2;
-  const badgeWidth = (Math.min(width, 480) - 72) / 3;
+  const statWidth = Math.floor((Math.min(width, 480) - 32) / 2);
+  const badgeWidth = Math.floor((Math.min(width, 480) - 80) / 3);
 
   useEffect(() => {
     loadData();
