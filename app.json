@@ -16,10 +16,10 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.freshpick.app",
+      "bundleIdentifier": "com.crispit.app",
       "infoPlist": {
-        "NSCameraUsageDescription": "FreshPick needs camera access to scan and identify produce.",
-        "NSPhotoLibraryUsageDescription": "FreshPick needs photo library access to analyze produce images."
+        "NSCameraUsageDescription": "CrispIt needs camera access to scan and identify produce.",
+        "NSPhotoLibraryUsageDescription": "CrispIt needs photo library access to analyze produce images."
       }
     },
     "android": {
@@ -27,7 +27,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#4CAF50"
       },
-      "package": "com.freshpick.app",
+      "package": "com.crispit.app",
       "permissions": [
         "CAMERA",
         "READ_MEDIA_IMAGES"
@@ -40,14 +40,14 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow FreshPick to scan produce for freshness assessment.",
+          "cameraPermission": "Allow CrispIt to scan produce for freshness assessment.",
           "microphonePermission": false
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow FreshPick to access your photos."
+          "photosPermission": "Allow CrispIt to access your photos."
         }
       ]
     ]
