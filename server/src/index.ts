@@ -38,7 +38,7 @@ app.get('/api/health', (_req, res) => {
 async function start() {
   await connectDB();
   app.listen(PORT, () => {
-    console.log(`LunchBox API running on port ${PORT}`);
+    console.log(`CrispIt API running on port ${PORT}`);
   });
 }
 

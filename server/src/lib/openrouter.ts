@@ -18,8 +18,8 @@ export async function chatCompletion(prompt: string, systemPrompt?: string) {
     headers: {
       'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
       'Content-Type': 'application/json',
-      'HTTP-Referer': 'https://lunchbox-app.com',
-      'X-Title': 'LunchBox',
+      'HTTP-Referer': 'https://crispit-app.com',
+      'X-Title': 'CrispIt',
     },
     body: JSON.stringify({
       model: 'google/gemini-2.5-flash',
@@ -48,8 +48,8 @@ export async function analyzeImageFallback(base64Image: string, prompt: string) 
     headers: {
       'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
       'Content-Type': 'application/json',
-      'HTTP-Referer': 'https://lunchbox-app.com',
-      'X-Title': 'LunchBox',
+      'HTTP-Referer': 'https://crispit-app.com',
+      'X-Title': 'CrispIt',
     },
     body: JSON.stringify({
       model: 'google/gemini-2.0-flash-001',
