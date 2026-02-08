@@ -52,8 +52,8 @@ export async function analyzeImageFallback(base64Image: string, prompt: string) 
       'X-Title': 'LunchBox',
     },
     body: JSON.stringify({
-      model: 'google/gemini-2.5-flash',
-      max_tokens: 1024,
+      model: 'google/gemini-2.0-flash-001',
+      max_tokens: 512,
       messages: [
         {
           role: 'user',
