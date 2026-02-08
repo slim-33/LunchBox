@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
 import { analyzeImage, analyzeImageLive } from '../lib/gemini';
+import { isDbConnected } from '../lib/mongodb';
 import Scan from '../models/Scan';
 import User from '../models/User';
 import carbonData from '../../../data/carbon-footprints.json';
@@ -54,8 +55,8 @@ router.post('/', async (req: Request, res: Response) => {
       carbon_footprint: carbon,
     };
 
-    // Save to MongoDB
-    try {
+    // Save to MongoDB (skip if not connected to avoid 10s timeout)
+    if (isDbConnected()) try {
       const scan = new Scan(scanResult);
       await scan.save();
       scanResult._id = scan._id;
@@ -82,7 +83,7 @@ router.post('/', async (req: Request, res: Response) => {
         user.best_streak = user.current_streak;
       }
       user.last_scan_date = now;
-      user.sustainability_score = Math.min(100, 50 + user.total_scans * 2 + user.current_streak * 3);
+      user.sustainability_score = Math.min(100, user.total_scans * 3 + user.current_streak * 5);
       await user.save();
     } catch (dbErr) {
       console.log('DB save skipped (no connection):', (dbErr as Error).message);
@@ -140,62 +141,16 @@ router.get('/test', async (_req: Request, res: Response) => {
   }
 });
 
-// Dummy scan history for when DB is empty or unavailable
-const DUMMY_SCANS = [
-  {
-    item_name: 'Red Apple', category: 'fruit', freshness_score: 8,
-    freshness_description: 'Very fresh with vibrant red coloring.',
-    estimated_days_remaining: 7,
-    storage_tips: ['Store in refrigerator crisper drawer'],
-    visual_indicators: ['Vibrant red color', 'Firm skin'],
-    sustainable_alternative: { name: 'Local Seasonal Pear', reason: '40% lower transport emissions', carbon_savings_percent: 40 },
-    carbon_footprint: { item: 'apple', co2e_per_kg: 0.4, category: 'fruit', comparison: 'Low impact', driving_equivalent_km: 2.5 },
-  },
-  {
-    item_name: 'Banana', category: 'fruit', freshness_score: 6,
-    freshness_description: 'Ripe with some brown spots.',
-    estimated_days_remaining: 3,
-    storage_tips: ['Keep at room temperature'],
-    visual_indicators: ['Yellow with brown spots'],
-    sustainable_alternative: { name: 'Local Berries', reason: 'Shorter transport chain', carbon_savings_percent: 35 },
-    carbon_footprint: { item: 'banana', co2e_per_kg: 0.7, category: 'fruit', comparison: 'Low impact', driving_equivalent_km: 4.3 },
-  },
-  {
-    item_name: 'Broccoli', category: 'vegetable', freshness_score: 9,
-    freshness_description: 'Deep green florets, very fresh.',
-    estimated_days_remaining: 5,
-    storage_tips: ['Store unwashed in loose bag in fridge'],
-    visual_indicators: ['Deep green color', 'Tight florets'],
-    sustainable_alternative: { name: 'Cabbage', reason: 'Lower water footprint', carbon_savings_percent: 25 },
-    carbon_footprint: { item: 'broccoli', co2e_per_kg: 0.9, category: 'vegetable', comparison: 'Low impact', driving_equivalent_km: 5.6 },
-  },
-  {
-    item_name: 'Chicken Breast', category: 'meat', freshness_score: 7,
-    freshness_description: 'Fresh, pink color, no odor.',
-    estimated_days_remaining: 2,
-    storage_tips: ['Keep refrigerated below 4°C'],
-    visual_indicators: ['Pink color', 'No discoloration'],
-    sustainable_alternative: { name: 'Tofu', reason: '80% lower carbon footprint', carbon_savings_percent: 80 },
-    carbon_footprint: { item: 'chicken', co2e_per_kg: 6.9, category: 'meat', comparison: 'Medium-high impact', driving_equivalent_km: 42.9 },
-  },
-  {
-    item_name: 'Avocado', category: 'fruit', freshness_score: 5,
-    freshness_description: 'Ripe, consume within 1-2 days.',
-    estimated_days_remaining: 2,
-    storage_tips: ['Refrigerate to slow ripening'],
-    visual_indicators: ['Dark green-brown skin', 'Yields to pressure'],
-    sustainable_alternative: { name: 'Hummus', reason: '70% lower water and carbon footprint', carbon_savings_percent: 70 },
-    carbon_footprint: { item: 'avocado', co2e_per_kg: 2.5, category: 'fruit', comparison: 'Medium impact', driving_equivalent_km: 15.5 },
-  },
-];
-
 // GET /api/scans — get scan history
 router.get('/', async (_req: Request, res: Response) => {
+  if (!isDbConnected()) {
+    return res.json([]);
+  }
   try {
     const scans = await Scan.find().sort({ created_at: -1 }).limit(50);
-    res.json(scans.length > 0 ? scans : DUMMY_SCANS);
+    res.json(scans);
   } catch {
-    res.json(DUMMY_SCANS);
+    res.json([]);
   }
 });
 

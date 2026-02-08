@@ -12,7 +12,7 @@ export interface IUser extends Document {
 }
 
 const UserSchema = new Schema<IUser>({
-  sustainability_score: { type: Number, default: 50 },
+  sustainability_score: { type: Number, default: 0 },
   total_scans: { type: Number, default: 0 },
   total_carbon_saved: { type: Number, default: 0 },
   current_streak: { type: Number, default: 0 },

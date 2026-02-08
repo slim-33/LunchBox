@@ -40,7 +40,7 @@ async function fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
 
 export async function scanImage(base64Image: string): Promise<ScanResult> {
   if (DEMO_MODE) {
-    await delay(1500);
+    await delay(100);
     const keys = Object.keys(DEMO_SCAN_RESULTS);
     const randomKey = keys[Math.floor(Math.random() * keys.length)];
     return DEMO_SCAN_RESULTS[randomKey];
@@ -57,7 +57,7 @@ export async function getCarbonFootprint(item: string): Promise<CarbonData> {
 
 export async function lookupBarcode(code: string): Promise<BarcodeProduct> {
   if (DEMO_MODE) {
-    await delay(800);
+    await delay(150);
     return DEMO_BARCODE;
   }
   return fetchApi<BarcodeProduct>(`/api/barcode/${encodeURIComponent(code)}`);
@@ -65,7 +65,7 @@ export async function lookupBarcode(code: string): Promise<BarcodeProduct> {
 
 export async function generateRecipes(items: string[]): Promise<RecipeSuggestion[]> {
   if (DEMO_MODE) {
-    await delay(2000);
+    await delay(100);
     return DEMO_RECIPES;
   }
   return fetchApi<RecipeSuggestion[]>('/api/recipes', {
@@ -86,7 +86,7 @@ export async function textToSpeech(text: string): Promise<ArrayBuffer> {
 
 export async function getFridgeItems(): Promise<FridgeItem[]> {
   if (DEMO_MODE) {
-    await delay(500);
+    await delay(100);
     return getDemoFridgeItems();
   }
   return fetchApi<FridgeItem[]>('/api/fridge');
@@ -94,7 +94,7 @@ export async function getFridgeItems(): Promise<FridgeItem[]> {
 
 export async function addFridgeItem(item: Omit<FridgeItem, '_id'>): Promise<FridgeItem> {
   if (DEMO_MODE) {
-    await delay(500);
+    await delay(100);
     return addDemoFridgeItem(item);
   }
   return fetchApi<FridgeItem>('/api/fridge', {
@@ -105,7 +105,7 @@ export async function addFridgeItem(item: Omit<FridgeItem, '_id'>): Promise<Frid
 
 export async function removeFridgeItem(id: string): Promise<void> {
   if (DEMO_MODE) {
-    await delay(300);
+    await delay(100);
     removeDemoItem(id);
     return;
   }
@@ -114,7 +114,7 @@ export async function removeFridgeItem(id: string): Promise<void> {
 
 export async function getScanHistory(): Promise<ScanResult[]> {
   if (DEMO_MODE) {
-    await delay(500);
+    await delay(100);
     return DEMO_SCAN_HISTORY;
   }
   return fetchApi<ScanResult[]>('/api/scans');
@@ -122,7 +122,7 @@ export async function getScanHistory(): Promise<ScanResult[]> {
 
 export async function getUserStats(): Promise<UserStats> {
   if (DEMO_MODE) {
-    await delay(500);
+    await delay(100);
     return DEMO_STATS;
   }
   return fetchApi<UserStats>('/api/stats');

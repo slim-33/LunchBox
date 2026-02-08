@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   View,
@@ -6,13 +6,13 @@ import {
   ScrollView,
   RefreshControl,
   Platform,
+  LayoutChangeEvent,
 } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { LineChart, PieChart } from 'react-native-chart-kit';
 import { useColorScheme } from '@/components/useColorScheme';
 import Colors from '@/constants/Colors';
 import { getUserStats, getScanHistory } from '@/lib/api';
-import { useResponsive } from '@/hooks/useResponsive';
 import WebContainer from '@/components/WebContainer';
 import type { UserStats, ScanResult } from '@/lib/types';
 
@@ -21,14 +21,15 @@ const monoFont = Platform.select({ ios: 'Courier', android: 'monospace', web: 'm
 export default function DashboardScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const theme = Colors[colorScheme];
-  const { width } = useResponsive();
   const [stats, setStats] = useState<UserStats | null>(null);
   const [recentScans, setRecentScans] = useState<ScanResult[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [chartWidth, setChartWidth] = useState(300);
 
-  const chartWidth = Math.min(width, 480) - 64;
-  const statWidth = Math.floor((Math.min(width, 480) - 32) / 2);
-  const badgeWidth = Math.floor((Math.min(width, 480) - 80) / 3);
+  const onChartCardLayout = useCallback((e: LayoutChangeEvent) => {
+    const cardWidth = e.nativeEvent.layout.width;
+    setChartWidth(cardWidth - 32); // subtract card padding (16 * 2)
+  }, []);
 
   useEffect(() => {
     loadData();
@@ -50,12 +51,16 @@ export default function DashboardScreen() {
     setRefreshing(false);
   }
 
-  const weeklyLabels = stats?.weekly_carbon?.map(w => {
-    const d = new Date(w.date);
-    return `${d.getMonth() + 1}/${d.getDate()}`;
-  }) || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-  const weeklyData = stats?.weekly_carbon?.map(w => w.co2e) || [0, 0, 0, 0, 0, 0, 0];
+  const hasWeeklyData = (stats?.weekly_carbon?.length ?? 0) > 0;
+  const weeklyLabels = hasWeeklyData
+    ? stats!.weekly_carbon!.map(w => {
+        const d = new Date(w.date);
+        return `${d.getMonth() + 1}/${d.getDate()}`;
+      })
+    : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const weeklyData = hasWeeklyData
+    ? stats!.weekly_carbon!.map(w => w.co2e)
+    : [0, 0, 0, 0, 0, 0, 0];
 
   const categoryMap: Record<string, number> = {};
   recentScans.forEach(scan => {
@@ -96,30 +101,30 @@ export default function DashboardScreen() {
           </Text>
         </View>
 
-        {/* Stats Grid */}
+        {/* Stats Grid — 2 columns using flex */}
         <View style={styles.statsGrid}>
-          <View style={[styles.miniStat, { backgroundColor: theme.surface, width: statWidth }]}>
+          <View style={[styles.miniStat, { backgroundColor: theme.surface }]}>
             <FontAwesome name="leaf" size={20} color={theme.primary} />
             <Text style={[styles.miniStatValue, { color: theme.text }]}>
               {stats?.total_carbon_saved?.toFixed(1) || '0.0'} kg
             </Text>
             <Text style={[styles.miniStatLabel, { color: theme.textSecondary }]}>CO₂ Saved</Text>
           </View>
-          <View style={[styles.miniStat, { backgroundColor: theme.surface, width: statWidth }]}>
+          <View style={[styles.miniStat, { backgroundColor: theme.surface }]}>
             <FontAwesome name="camera" size={20} color={theme.primary} />
             <Text style={[styles.miniStatValue, { color: theme.text }]}>
               {stats?.total_scans || 0}
             </Text>
             <Text style={[styles.miniStatLabel, { color: theme.textSecondary }]}>Total Scans</Text>
           </View>
-          <View style={[styles.miniStat, { backgroundColor: theme.surface, width: statWidth }]}>
+          <View style={[styles.miniStat, { backgroundColor: theme.surface }]}>
             <FontAwesome name="fire" size={20} color={theme.warning} />
             <Text style={[styles.miniStatValue, { color: theme.text }]}>
               {stats?.current_streak || 0}
             </Text>
             <Text style={[styles.miniStatLabel, { color: theme.textSecondary }]}>Day Streak</Text>
           </View>
-          <View style={[styles.miniStat, { backgroundColor: theme.surface, width: statWidth }]}>
+          <View style={[styles.miniStat, { backgroundColor: theme.surface }]}>
             <FontAwesome name="trophy" size={20} color="#F4A261" />
             <Text style={[styles.miniStatValue, { color: theme.text }]}>
               {stats?.best_streak || 0}
@@ -129,7 +134,7 @@ export default function DashboardScreen() {
         </View>
 
         {/* Weekly Carbon Chart */}
-        <View style={[styles.chartCard, { backgroundColor: theme.surface }]}>
+        <View style={[styles.chartCard, { backgroundColor: theme.surface }]} onLayout={onChartCardLayout}>
           <Text style={[styles.chartTitle, { color: theme.text }]}>Weekly Carbon Footprint</Text>
           <Text style={[styles.chartSubtitle, { color: theme.textSecondary }]}>kg CO₂e per day</Text>
           <LineChart
@@ -160,7 +165,7 @@ export default function DashboardScreen() {
 
         {/* Category Breakdown */}
         {pieData.length > 0 && (
-          <View style={[styles.chartCard, { backgroundColor: theme.surface }]}>
+          <View style={[styles.chartCard, { backgroundColor: theme.surface }]} onLayout={onChartCardLayout}>
             <Text style={[styles.chartTitle, { color: theme.text }]}>Carbon by Category</Text>
             <PieChart
               data={pieData}
@@ -187,7 +192,7 @@ export default function DashboardScreen() {
             </Text>
             {recentScans.slice(0, 8).map((scan, i) => (
               <View key={i} style={styles.receiptRow}>
-                <Text style={[styles.receiptItem, { color: theme.text }]}>{scan.item_name}</Text>
+                <Text style={[styles.receiptItem, { color: theme.text }]} numberOfLines={1}>{scan.item_name}</Text>
                 <Text style={[styles.receiptValue, { color: theme.text }]}>
                   {scan.carbon_footprint?.co2e_per_kg?.toFixed(1) || '?'} kg
                 </Text>
@@ -212,7 +217,7 @@ export default function DashboardScreen() {
           </View>
         )}
 
-        {/* Badges */}
+        {/* Badges — 3 columns using flex */}
         <View style={[styles.badgesCard, { backgroundColor: theme.surface }]}>
           <Text style={[styles.chartTitle, { color: theme.text }]}>Achievements</Text>
           <View style={styles.badgesGrid}>
@@ -221,7 +226,7 @@ export default function DashboardScreen() {
                 key={i}
                 style={[
                   styles.badge,
-                  { backgroundColor: badge.earned ? theme.accent : theme.background, width: badgeWidth },
+                  { backgroundColor: badge.earned ? theme.accent : theme.background },
                   !badge.earned && { opacity: 0.4 },
                 ]}>
                 <FontAwesome
@@ -271,6 +276,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   miniStat: {
+    flexBasis: '47%',
+    flexGrow: 1,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -286,6 +293,7 @@ const styles = StyleSheet.create({
     margin: 16,
     padding: 16,
     borderRadius: 16,
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
@@ -325,10 +333,13 @@ const styles = StyleSheet.create({
   receiptItem: {
     fontSize: 14,
     fontFamily: monoFont,
+    flex: 1,
+    marginRight: 8,
   },
   receiptValue: {
     fontSize: 14,
     fontFamily: monoFont,
+    flexShrink: 0,
   },
   receiptDivider: {
     borderTopWidth: 1,
@@ -363,6 +374,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   badge: {
+    flexBasis: '30%',
+    flexGrow: 1,
     padding: 12,
     borderRadius: 12,
     alignItems: 'center',

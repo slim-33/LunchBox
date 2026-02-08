@@ -50,10 +50,10 @@ export default function ScanResultScreen() {
       });
 
       setSavedToFridge(true);
-      Alert.alert('Saved!', `${scanResult.item_name} added to your fridge tracker.`, [
-        { text: 'OK' },
-        { text: 'Go to Fridge', onPress: () => router.push('/(tabs)/fridge') },
-      ]);
+      // Brief confirmation then go back to scanner
+      setTimeout(() => {
+        router.replace('/(tabs)/scan');
+      }, 600);
     } catch {
       Alert.alert('Error', 'Could not save to fridge.');
     } finally {

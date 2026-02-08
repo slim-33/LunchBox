@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { isDbConnected } from '../lib/mongodb';
 import User from '../models/User';
 import Scan from '../models/Scan';
 
@@ -13,33 +14,31 @@ const ALL_BADGES = [
   { id: 'eco_warrior', name: 'Eco Warrior', description: 'Reach 80+ sustainability score', icon: 'globe', threshold: (u: any) => u.sustainability_score >= 80 },
 ];
 
+function emptyStats() {
+  return {
+    total_scans: 0,
+    total_carbon_saved: 0,
+    current_streak: 0,
+    best_streak: 0,
+    sustainability_score: 0,
+    badges: ALL_BADGES.map(b => ({
+      id: b.id, name: b.name, description: b.description, icon: b.icon,
+      earned: false,
+    })),
+    weekly_carbon: [],
+  };
+}
+
 // GET /api/stats — get user statistics
 router.get('/', async (_req: Request, res: Response) => {
+  if (!isDbConnected()) {
+    return res.json(emptyStats());
+  }
+
   try {
     const user = await User.findOne();
     if (!user) {
-      // Return dummy data so the dashboard isn't empty
-      const today = new Date();
-      const dummyWeekly = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(today);
-        d.setDate(d.getDate() - (6 - i));
-        return { date: d.toISOString().split('T')[0], co2e: +(1.5 + Math.random() * 3).toFixed(1) };
-      });
-      return res.json({
-        total_scans: 23,
-        total_carbon_saved: 4.7,
-        current_streak: 5,
-        best_streak: 7,
-        sustainability_score: 73,
-        badges: ALL_BADGES.map(b => ({
-          id: b.id, name: b.name, description: b.description, icon: b.icon,
-          earned: ['first_scan', 'streak_3', 'streak_7'].includes(b.id),
-          earned_date: ['first_scan', 'streak_3', 'streak_7'].includes(b.id)
-            ? today.toISOString() : undefined,
-          threshold: undefined,
-        })),
-        weekly_carbon: dummyWeekly,
-      });
+      return res.json(emptyStats());
     }
 
     // Calculate badges
@@ -80,26 +79,21 @@ router.get('/', async (_req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Stats error:', error);
-    // Return dummy data on error (e.g. DB not connected) so the dashboard still works
-    const today = new Date();
-    const dummyWeekly = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(today);
-      d.setDate(d.getDate() - (6 - i));
-      return { date: d.toISOString().split('T')[0], co2e: +(1.5 + Math.random() * 3).toFixed(1) };
-    });
-    res.json({
-      total_scans: 23,
-      total_carbon_saved: 4.7,
-      current_streak: 5,
-      best_streak: 7,
-      sustainability_score: 73,
-      badges: ALL_BADGES.map(b => ({
-        id: b.id, name: b.name, description: b.description, icon: b.icon,
-        earned: ['first_scan', 'streak_3', 'streak_7'].includes(b.id),
-        threshold: undefined,
-      })),
-      weekly_carbon: dummyWeekly,
-    });
+    res.json(emptyStats());
+  }
+});
+
+// DELETE /api/stats/reset — reset all user stats and scan history
+router.delete('/reset', async (_req: Request, res: Response) => {
+  try {
+    if (isDbConnected()) {
+      await User.deleteMany({});
+      await Scan.deleteMany({});
+    }
+    res.json({ success: true, message: 'All stats and scan history cleared' });
+  } catch (error) {
+    console.error('Reset error:', error);
+    res.status(500).json({ error: 'Failed to reset' });
   }
 });
 

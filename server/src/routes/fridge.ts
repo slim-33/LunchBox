@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import mongoose from 'mongoose';
+import { isDbConnected } from '../lib/mongodb';
 import FridgeItem from '../models/FridgeItem';
 
 const router = Router();
@@ -11,10 +12,6 @@ interface MemFridgeItem {
 }
 const memoryStore: MemFridgeItem[] = [];
 let memIdCounter = 1;
-
-function isDbConnected(): boolean {
-  return mongoose.connection.readyState === 1;
-}
 
 function isValidObjectId(id: string): boolean {
   return mongoose.Types.ObjectId.isValid(id) && /^[a-f\d]{24}$/i.test(id);
