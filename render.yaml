@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: crispit-server
+    runtime: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npx ts-node src/index.ts
+    plan: free
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: MONGODB_URI
+        sync: false
